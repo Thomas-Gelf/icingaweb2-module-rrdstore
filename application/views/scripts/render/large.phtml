@@ -1,0 +1,36 @@
+<div class="controls">
+<?= $this->tabs ?>
+</div>
+
+<div class="content">
+<?php
+
+$titleComponents = array('host', 'service', 'sub_service', 'graph_name');
+
+$c = array();
+$urlParams = array();
+foreach ($titleComponents as $component) {
+    if ($graph->$component !== null) {
+        $c[] = $graph->$component;
+        $urlParams[$component] = $graph->$component;
+    }
+}
+echo '<h3>' . $this->escape(implode($c, ' - ')) . '</h3>' . "\n";
+
+echo $this->img(
+    'rrdstore/render/graph',
+    array(
+        'id'     => $graph->graph_id,
+        'width'  => $this->width,
+        'height' => $this->height,
+        'start'  => $this->start,
+        'end'    => $this->end,
+    ),
+    array(
+        'title' => implode($c, ' - '),
+        'style' => 'max-width: 100%'
+    )
+) . "\n";
+
+?>
+</div>
