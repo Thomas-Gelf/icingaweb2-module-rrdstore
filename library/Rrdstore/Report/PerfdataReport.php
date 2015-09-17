@@ -129,6 +129,7 @@ class PerfdataReport extends IdoReport
 
     protected function prepareGraphQuery()
     {
+        $hostgroup = $this->getValue('hostgroup');
         $db = $this->db()->getDbAdapter();
         $columns = array(
             'object_id'   => 'o.id',
@@ -147,21 +148,26 @@ class PerfdataReport extends IdoReport
             array('g' => 'pnp_graph'),
             'g.pnp_object_id = o.id',
             array()
-        )->join(
-            array('hgm' => 'icinga.icinga_hostgroup_members'),
-            'hgm.host_object_id = o.icinga_host_id',
-            array()
-        )->join(
-            array('hg' => 'icinga.icinga_hostgroups'),
-            'hgm.hostgroup_id = hg.hostgroup_id',
-            array()
-        )->join(
-            array('hgo' => 'icinga.icinga_objects'),
-            'hgo.object_id = hg.hostgroup_object_id',
-            array()
         );
 
-        $query->where('hgo.name1 = ?', $this->getValue('hostgroup'));
+
+        if ($hostgroup) {
+            $query->join(
+                array('hgm' => 'icinga.icinga_hostgroup_members'),
+                'hgm.host_object_id = o.icinga_host_id',
+                array()
+            )->join(
+                array('hg' => 'icinga.icinga_hostgroups'),
+                'hgm.hostgroup_id = hg.hostgroup_id',
+                array()
+            )->join(
+                array('hgo' => 'icinga.icinga_objects'),
+                'hgo.object_id = hg.hostgroup_object_id',
+                array()
+            );
+
+            $query->where('hgo.name1 = ?', $hostgroup);
+        }
 
         $filters = array(
             'host'           => $this->getValue('host'),
