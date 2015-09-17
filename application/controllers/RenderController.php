@@ -84,16 +84,6 @@ class Rrdstore_RenderController extends Controller
         return $query;
     }
 
-    public function graphcommandAction()
-    {
-        echo $this->rrdstore()->graphCommand(
-            $this->params->get('id'),
-            $this->params->get('width', 100),
-            $this->params->get('height', 50)
-        );
-        exit;
-    }
-
     protected function rrdstore()
     {
         if ($this->rrdstore === null) {
