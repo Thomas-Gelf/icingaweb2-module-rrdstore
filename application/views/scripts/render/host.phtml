@@ -24,6 +24,8 @@ foreach ($this->graphs as $graph) {
             $urlParams[$component] = $graph->$component;
         }
     }
+    $urlParams['start'] = $this->start;
+    $urlParams['end']   = $this->end;
 
     if ($lastHost !== $host) {
         echo '<h3>' . $this->escape($host) . "</h3>\n";

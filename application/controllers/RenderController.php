@@ -31,9 +31,23 @@ class Rrdstore_RenderController extends Controller
             'label' => 'Filtered graphs'
         ))->activate('filtered');
         $db = $this->db()->getDbAdapter();
-        $this->view->graphs = $db->fetchAll($this->prepareGraphQuery()->limit($this->params->get('limit', 200)));
+        $filters = array('host' => $this->params->get('host'));
+        if ($service = $this->params->get('service')) {
+            $filters['service'] = $service;
+            $query = $this->prepareGraphQuery($filters);
+        } else {
+            $query = $this->prepareGraphQuery($filters);
+            $query->where('o.icinga_service IS NULL');
+        }
+
+        $query->limit($this->params->get('limit', 200));
+        $this->view->graphs = $db->fetchAll($query);
         $this->view->width = $this->params->get('width', 96);
         $this->view->height = $this->params->get('height', 48);
+        $this->view->width = $this->params->get('width', 60);
+        $this->view->height = $this->params->get('height', 30);
+        $this->view->start = time() - 7200;
+        $this->view->end = time();
     }
 
     public function largeAction()
