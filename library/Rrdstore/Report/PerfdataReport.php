@@ -95,10 +95,19 @@ class PerfdataReport extends IdoReport
     {
         $db = $this->db()->getDbAdapter();
         $size = $this->getValue('size');
+
+        $filters = array(
+            'host'           => $this->getValue('host'),
+            'hostgroup'      => $this->getValue('hostgroup'),
+            'search_service' => $this->getValue('service'),
+            // 'sub_service' => $this->getValue('sub_service'),
+            'graph_name'     => $this->getValue('graph_name'),
+        );
+
         $timeframe = $this->getSelectedTimeframe();
         return array(
             'graphs' => $db->fetchAll(
-                $this->prepareGraphQuery()->limit(
+                $this->db()->prepareGraphQuery($filters)->limit(
                     $this->getValue('limit')
                 )
             ),
@@ -125,69 +134,6 @@ class PerfdataReport extends IdoReport
             $enum[$limit] = sprintf($caption, $limit);
         }
         return $enum;
-    }
-
-    protected function prepareGraphQuery()
-    {
-        $hostgroup = $this->getValue('hostgroup');
-        $db = $this->db()->getDbAdapter();
-        $columns = array(
-            'object_id'   => 'o.id',
-            'graph_id'    => 'g.id',
-            'host'        => 'o.icinga_host',
-            'search_service' => 'CASE WHEN o.icinga_sub_service IS NULL THEN o.icinga_service ELSE o.icinga_sub_service END',
-            'service'     => 'o.icinga_service',
-            'sub_service' => 'o.icinga_sub_service',
-            'graph_name'  => 'g.graph_name'
-        );
-
-        $query = $db->select()->from(
-            array('o' => 'pnp_object'),
-            $columns
-        )->join(
-            array('g' => 'pnp_graph'),
-            'g.pnp_object_id = o.id',
-            array()
-        );
-
-
-        if ($hostgroup) {
-            $query->join(
-                array('hgm' => 'icinga.icinga_hostgroup_members'),
-                'hgm.host_object_id = o.icinga_host_id',
-                array()
-            )->join(
-                array('hg' => 'icinga.icinga_hostgroups'),
-                'hgm.hostgroup_id = hg.hostgroup_id',
-                array()
-            )->join(
-                array('hgo' => 'icinga.icinga_objects'),
-                'hgo.object_id = hg.hostgroup_object_id',
-                array()
-            );
-
-            $query->where('hgo.name1 = ?', $hostgroup);
-        }
-
-        $filters = array(
-            'host'           => $this->getValue('host'),
-            'search_service' => $this->getValue('service'),
-            // 'sub_service' => $this->getValue('sub_service'),
-            'graph_name'     => $this->getValue('graph_name'),
-        );
-
-        foreach ($columns as $alias => $col) {
-            if (! array_key_exists($alias, $filters)) continue;
-            if ($value = $filters[$alias]) {
-                if (strpos($value, '*') === false) {
-                    $query->where($col . ' = ?', $value);
-                } else {
-                    $query->where($col . ' LIKE ?', str_replace('*', '%', $value));
-                }
-            }
-        }
-
-        return $query;
     }
 
     protected function db()

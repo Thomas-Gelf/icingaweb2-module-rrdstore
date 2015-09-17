@@ -133,17 +133,19 @@ class Db extends DbConnection
 
         if (array_key_exists('hostgroup', $filters)) {
             $hostgroup = $filters['hostgroup'];
-            if ($hostgroup !== null) {
+            if ($hostgroup) {
                 $this->joinIcingaHostgroups($query);
-                $query->where('hgo.name1 = ?', $hostgroup);
+                $this->addFilter($query, 'hgo.name1', $hostgroup);
             }
         }
 
         foreach ($columns as $alias => $col) {
             if (! array_key_exists($alias, $filters)) continue;
-            if (array_key_exists($alias, $filters) && $filters[$alias] !== null) {
-                $value = $filters[$alias];
-                $this->addFilter($query, $col, $value);
+            if (array_key_exists($alias, $filters)) {
+                if ($filters[$alias] !== null && $filters[$alias] !== '') {
+                    $value = $filters[$alias];
+                    $this->addFilter($query, $col, $value);
+                }
             }
         }
 
