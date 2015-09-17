@@ -107,4 +107,77 @@ class Db extends DbConnection
 
         return $db->fetchAll($query);
     }
+
+    public function prepareGraphQuery($filters)
+    {
+        $db = $this->getDbAdapter();
+
+        $columns = array(
+            'object_id'   => 'o.id',
+            'graph_id'    => 'g.id',
+            'host'        => 'o.icinga_host',
+            'search_service' => 'CASE WHEN o.icinga_sub_service IS NULL THEN o.icinga_service ELSE o.icinga_sub_service END',
+            'service'     => 'o.icinga_service',
+            'sub_service' => 'o.icinga_sub_service',
+            'graph_name'  => 'g.graph_name'
+        );
+
+        $query = $db->select()->from(
+            array('o' => 'pnp_object'),
+            $columns
+        )->join(
+            array('g' => 'pnp_graph'),
+            'g.pnp_object_id = o.id',
+            array()
+        );
+
+        if (array_key_exists('hostgroup', $filters)) {
+            $hostgroup = $filters['hostgroup'];
+            if ($hostgroup !== null) {
+                $this->joinIcingaHostgroups($query);
+                $query->where('hgo.name1 = ?', $hostgroup);
+            }
+        }
+
+        foreach ($columns as $alias => $col) {
+            if (! array_key_exists($alias, $filters)) continue;
+            if (array_key_exists($alias, $filters) && $filters[$alias] !== null) {
+                $value = $filters[$alias];
+                $this->addFilter($query, $col, $value);
+            }
+        }
+
+        return $query;
+    }
+
+    protected function addFilter($query, $col, $value)
+    {
+        if (strpos($value, '*') === false) {
+            $query->where($col . ' = ?', $value);
+        } else {
+            $query->where($col . ' LIKE ?', str_replace('*', '%', $value));
+        }
+
+        return $query;
+    }
+
+    protected function joinIcingaHostgroups($query)
+    {
+        $query->join(
+            array('hgm' => 'icinga.icinga_hostgroup_members'),
+            'hgm.host_object_id = o.icinga_host_id',
+            array()
+        )->join(
+            array('hg' => 'icinga.icinga_hostgroups'),
+            'hgm.hostgroup_id = hg.hostgroup_id',
+            array()
+        )->join(
+            array('hgo' => 'icinga.icinga_objects'),
+            'hgo.object_id = hg.hostgroup_object_id',
+            array()
+        );
+
+        return $query;
+    }
+
 }
