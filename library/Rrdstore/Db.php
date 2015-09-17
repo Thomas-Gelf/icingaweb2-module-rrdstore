@@ -3,6 +3,7 @@
 namespace Icinga\Module\Rrdstore;
 
 use Icinga\Data\Db\DbConnection;
+use Icinga\Web\UrlParams;
 
 class Db extends DbConnection
 {
@@ -121,6 +122,14 @@ class Db extends DbConnection
             'sub_service' => 'o.icinga_sub_service',
             'graph_name'  => 'g.graph_name'
         );
+
+        if ($filters instanceof UrlParams) {
+            $params = $filters;
+            $filters = array();
+            foreach (array_merge(array('hostgroup'), array_keys($columns)) as $param) {
+                $filters[$param] = $params->get($param);
+            }
+        }
 
         $query = $db->select()->from(
             array('o' => 'pnp_object'),

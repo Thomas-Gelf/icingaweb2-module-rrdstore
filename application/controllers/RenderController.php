@@ -34,9 +34,9 @@ class Rrdstore_RenderController extends Controller
         $filters = array('host' => $this->params->get('host'));
         if ($service = $this->params->get('service')) {
             $filters['service'] = $service;
-            $query = $this->prepareGraphQuery($filters);
+            $query = $this->db()->prepareGraphQuery($filters);
         } else {
-            $query = $this->prepareGraphQuery($filters);
+            $query = $this->db()->prepareGraphQuery($filters);
             $query->where('o.icinga_service IS NULL');
         }
 
@@ -57,45 +57,11 @@ class Rrdstore_RenderController extends Controller
             'label' => 'Single graph'
         ))->activate('large');
         $db = $this->db()->getDbAdapter();
-        $this->view->graph  = $db->fetchRow($this->prepareGraphQuery());
+        $this->view->graph  = $db->fetchRow($this->db()->prepareGraphQuery($this->params));
         $this->view->width  = $this->params->get('width', 640);
         $this->view->height = $this->params->get('height', 480);
         $this->view->start  = $this->params->get('start');
         $this->view->end    = $this->params->get('end');
-    }
-
-    protected function prepareGraphQuery()
-    {
-        $db = $this->db()->getDbAdapter();
-        $columns = array(
-            'object_id'   => 'o.id',
-            'graph_id'    => 'g.id',
-            'host'        => 'o.icinga_host',
-            'service'     => 'o.icinga_service',
-            'sub_service' => 'o.icinga_sub_service',
-            'graph_name'  => 'g.graph_name'
-        );
-
-        $query = $db->select()->from(
-            array('o' => 'pnp_object'),
-            $columns
-        )->join(
-            array('g' => 'pnp_graph'),
-            'g.pnp_object_id = o.id',
-            array()
-        );
-
-        foreach ($columns as $alias => $col) {
-            if ($value = $this->params->get($alias)) {
-                if (strpos($value, '*') === false) {
-                    $query->where($col . ' = ?', $value);
-                } else {
-                    $query->where($col . ' LIKE ?', str_replace('*', '%', $value));
-                }
-            }
-        }
-
-        return $query;
     }
 
     protected function rrdstore()
