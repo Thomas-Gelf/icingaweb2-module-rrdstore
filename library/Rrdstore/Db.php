@@ -138,7 +138,9 @@ class Db extends DbConnection
             array('g' => 'pnp_graph'),
             'g.pnp_object_id = o.id',
             array()
-        );
+        )->order('o.icinga_host')
+         ->order('o.icinga_service')
+         ->order('o.icinga_sub_service');
 
         if (array_key_exists('hostgroup', $filters)) {
             $hostgroup = $filters['hostgroup'];
