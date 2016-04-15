@@ -39,20 +39,23 @@ class AnomaliesReport extends RrdstoreReport
     public function getViewData()
     {
         $db = $this->db()->getDbAdapter();
-        $results = $db->fetchOne(
-            $db->select()->from('anomaly_checks', 'matches')
+        $results = $db->fetchRow(
+            $db->select()->from('anomaly_checks', array('matches', 'last_run'))
                ->where('check_name = ?', $this->getValue('anomaly_check'))
         );
 
-        $anomaly = $this->anomalies->get($this->getValue('anomaly_check'));
+        $name = $this->getValue('anomaly_check');
+        $anomaly = $this->anomalies->get($name);
 
         $size = $this->getValue('size');
 
         return array(
-            'graphs'  => array(),
-            'results' => json_decode($results),
-            'width'  => $this->sizes[$size]['width'],
-            'height' => $this->sizes[$size]['height'],
+            'title'    => $name,
+            'graphs'   => array(),
+            'last_run' => $results->last_run,
+            'matches'  => json_decode($results->matches),
+            'width'    => $this->sizes[$size]['width'],
+            'height'   => $this->sizes[$size]['height'],
         );
     }
 

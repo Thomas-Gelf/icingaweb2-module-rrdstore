@@ -1,8 +1,20 @@
-<h1>Trend (performance) graphs</h1>
+<h1><?= $this->escape($this->title) ?></h1>
+<?php
+$stats = $this->matches->stats;
+?>
+<p><?= $this->escape(sprintf(
+    'It took %dms to query the database and %dms to walk through the RRD'
+    . ' files to find %d matches in %d data sources at %s',
+    $stats->duration_ms_database,
+    $stats->duration_ms_rrd,
+    $stats->cnt_matches,
+    $stats->cnt_checked_datasources,
+    $this->last_run
+)) ?></p>
 
 <div class="images" data-base-target="_next">
 <pre>
-<?= $this->escape(print_r($this->results, 1)) ?>
+<?= $this->escape(print_r($this->matches, 1)) ?>
 </pre>
 <?php
 $titleComponents = array('host', 'service', 'sub_service', 'graph_name');
