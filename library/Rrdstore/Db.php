@@ -191,4 +191,8 @@ class Db extends DbConnection
         return $query;
     }
 
+    public function isPgsql()
+    {
+        return $this->getDbType() === 'pgsql';
+    }
 }
