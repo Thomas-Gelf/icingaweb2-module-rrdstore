@@ -1,0 +1,59 @@
+<h1>Trend (performance) graphs</h1>
+
+<div class="images" data-base-target="_next">
+<pre>
+<?= $this->escape(print_r($this->results, 1)) ?>
+</pre>
+<?php
+$titleComponents = array('host', 'service', 'sub_service', 'graph_name');
+
+$lastHost = false;
+$lastService = false;
+//echo '<div style="display: inline-block; margin-right: 4px"">';
+foreach ($this->graphs as $graph) {
+    $host = $graph->host;
+    $service = $graph->sub_service
+        // ? sprintf('%s (%s)', $graph->sub_service, $graph->service)
+        ? $graph->sub_service
+        : $graph->service;
+
+    $c = array();
+    $urlParams = array();
+    foreach ($titleComponents as $component) {
+        if ($graph->$component !== null) {
+            $c[] = $graph->$component;
+            $urlParams[$component] = $graph->$component;
+        }
+    }
+    $urlParams['start'] = $this->start;
+    $urlParams['end']   = $this->end;
+
+    if ($lastHost !== $host) {
+        echo '<h3>' . $this->escape($host) . "</h3>\n";
+    }
+
+    if ($lastService !== $service) {
+        echo '<h6 style="border: none">' . $this->escape($service ?: 'Host check') . ":</h6>\n";
+    }
+
+    $lastService = $service;
+    $lastHost = $host;
+
+    echo '<a href="' . $this->url('rrdstore/render/large', $urlParams) . '">';
+    echo $this->img(
+        'rrdstore/render/graph',
+        array(
+            'id'     => $graph->graph_id,
+            'width'  => $this->width,
+            'height' => $this->height,
+            'start'  => $this->start,
+            'end'    => $this->end
+        ),
+        array(
+            'title' => implode($c, ' - '),
+        )
+    ) . "</a>\n";
+}
+
+?>
+</div>
