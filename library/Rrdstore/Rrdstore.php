@@ -237,7 +237,6 @@ class Rrdstore
         $filter = Filter::fromQueryString($filter);
         $datasources = $db->fetchAll($query);
 
-        printf("Checking %d datasources\n", count($datasources));
         if ($start === null) {
             $start = time() - 3600 * 4;
         } else {
@@ -257,15 +256,25 @@ class Rrdstore
             $lookup[$ds->datasource_id] = $idx;
         }
 
+        $result = (object) array(
+            'stats' => (object) array(
+                'cnt_checked_datasources' => count($datasources)
+            ),
+            'matches' => array(
+            )
+        );
         foreach ($res as $k => $r) {
             if (! $filter->matches((object) $r)) {
                 continue;
             }
 
             $ds = $datasources[$lookup[$r['rrd_datasource_id']]];
-            printf("%s: %s\n", $ds->icinga_host, $ds->icinga_service);
-            // print_r($r);
+            $result->matches[] = (object) ((array) $ds + (array) $r);
         }
+
+        $result->stats->cnt_matches = count($result->matches);
+
+        return $result;
     }
 
     public function graphCommand($id, $width = 400, $height = 100, $start = null, $end = null)
@@ -352,7 +361,7 @@ class Rrdstore
         exit;
     }
 
-    protected function summariesForDatasources($datasources, $start, $end, $dayColumn)
+    protected function summariesForDatasources($datasources, $start, $end, $dayColumn = null)
     {
         $pattern = array(
             'max'   => ' DEF:%3$sa=%1$s:%2$s:MAX VDEF:%3$saa=%3$sa,MAXIMUM PRINT:%3$saa:"%4$d %5$s %%.2lf"',
@@ -415,9 +424,11 @@ class Rrdstore
                     $dskey = $datasources[$dsid]->filename . ': ' . $datasources[$dsid]->datasource;
                     if (! array_key_exists($dskey, $res)) {
                         $res[$dskey] = array(
-                            'rrd_datasource_id' => $datasources[$dsid]->datasource_id,
-                            $dayColumn => date('Y-m-d', $start)
+                            'rrd_datasource_id' => $datasources[$dsid]->datasource_id
                         );
+                        if ($dayColumn !== null) {
+                            $dayColumn = date('Y-m-d', $start);
+                        }
                     }
 
                     // TODO: What about inf/-inf?

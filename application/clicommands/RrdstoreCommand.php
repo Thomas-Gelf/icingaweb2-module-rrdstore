@@ -4,6 +4,7 @@ namespace Icinga\Module\Rrdstore\Clicommands;
 
 use Icinga\Application\Icinga;
 use Icinga\Cli\Command;
+use Icinga\Module\Rrdstore\Anomalies;
 use Icinga\Module\Rrdstore\Db;
 use Icinga\Module\Rrdstore\Rrdstore;
 use Icinga\Module\Rrdstore\Pnpstore;
@@ -44,7 +45,15 @@ class RrdstoreCommand extends Command
         $filter = $this->params->shift('filter');
         $start = $this->params->shift('start');
         $end = $this->params->shift('end');
-        $this->rrdstore()->checkData($host, $service, $filter, $start, $end);
+        print_r(
+            $this->rrdstore()->checkData($host, $service, $filter, $start, $end)
+        );
+    }
+
+    public function anomaliesAction()
+    {
+        $anomalies = new Anomalies();
+        $anomalies->runChecks($this->rrdstore(), $this->db());
     }
 
     protected function db()
