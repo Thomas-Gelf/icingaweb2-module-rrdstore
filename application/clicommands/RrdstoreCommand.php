@@ -17,7 +17,8 @@ class RrdstoreCommand extends Command
 
     public function graphtestAction()
     {
-        print_r(PnpTemplateWrapper::fromDb($this->db(), $this->params->shift(), $this->params->shift())->getGraphs());
+        PnpTemplateWrapper::fromDb($this->db(), $this->params->shift(), $this->params->shift());
+        // print_r(PnpTemplateWrapper::fromDb($this->db(), $this->params->shift(), $this->params->shift())->getGraphs());
     }
 
     public function refreshAction()
@@ -34,6 +35,16 @@ class RrdstoreCommand extends Command
     public function datatestAction()
     {
         $this->rrdstore()->testData();
+    }
+
+    public function checkAction()
+    {
+        $host = $this->params->shift('host');
+        $service = $this->params->shift('service');
+        $filter = $this->params->shift('filter');
+        $start = $this->params->shift('start');
+        $end = $this->params->shift('end');
+        $this->rrdstore()->checkData($host, $service, $filter, $start, $end);
     }
 
     protected function db()
