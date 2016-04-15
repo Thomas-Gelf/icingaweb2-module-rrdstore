@@ -278,7 +278,7 @@ class Rrdstore
             $ds = $datasources[$lookup[$r['rrd_datasource_id']]];
             $result->matches[] = (object) (
                 (array) $ds
-                + array('start' => $start, 'end' => $end),
+                + array('start' => $start, 'end' => $end)
                 + (array) $r
             );
         }
