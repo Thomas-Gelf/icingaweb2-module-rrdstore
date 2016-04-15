@@ -46,14 +46,27 @@ class AnomaliesReport extends RrdstoreReport
 
         $name = $this->getValue('anomaly_check');
         $anomaly = $this->anomalies->get($name);
-
         $size = $this->getValue('size');
+
+        $matches = json_decode($results->matches);
+
+        foreach ($matches->matches as $match) {
+            $filters = array(
+                'host'    => $match->icinga_host,
+                'service' => $match->icinga_service,
+            );
+
+            $match->graphs = $db->fetchAll(
+                $this->db()->prepareGraphQuery($filters)->limit(
+                    $this->getValue('limit')
+                )
+            );
+        }
 
         return array(
             'title'    => $name,
-            'graphs'   => array(),
             'last_run' => $results->last_run,
-            'matches'  => json_decode($results->matches),
+            'matches'  => $matches,
             'width'    => $this->sizes[$size]['width'],
             'height'   => $this->sizes[$size]['height'],
         );

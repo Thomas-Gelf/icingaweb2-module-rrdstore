@@ -13,19 +13,17 @@ $stats = $this->matches->stats;
 )) ?></p>
 
 <div class="images" data-base-target="_next">
-<pre>
-<?= $this->escape(print_r($this->matches, 1)) ?>
-</pre>
 <?php
+
+foreach ($this->matches->matches as $result) {
 $titleComponents = array('host', 'service', 'sub_service', 'graph_name');
 
 $lastHost = false;
 $lastService = false;
-//echo '<div style="display: inline-block; margin-right: 4px"">';
-foreach ($this->graphs as $graph) {
+
+foreach ($result->graphs as $graph) {
     $host = $graph->host;
     $service = $graph->sub_service
-        // ? sprintf('%s (%s)', $graph->sub_service, $graph->service)
         ? $graph->sub_service
         : $graph->service;
 
@@ -37,8 +35,8 @@ foreach ($this->graphs as $graph) {
             $urlParams[$component] = $graph->$component;
         }
     }
-    $urlParams['start'] = $this->start;
-    $urlParams['end']   = $this->end;
+    $urlParams['start'] = $result->start;
+    $urlParams['end']   = $result->end;
 
     if ($lastHost !== $host) {
         echo '<h3>' . $this->escape($host) . "</h3>\n";
@@ -58,14 +56,14 @@ foreach ($this->graphs as $graph) {
             'id'     => $graph->graph_id,
             'width'  => $this->width,
             'height' => $this->height,
-            'start'  => $this->start,
-            'end'    => $this->end
+            'start'  => $result->start,
+            'end'    => $result->end
         ),
         array(
             'title' => implode($c, ' - '),
         )
     ) . "</a>\n";
 }
-
+}
 ?>
 </div>
