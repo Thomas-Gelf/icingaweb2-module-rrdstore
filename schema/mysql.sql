@@ -31,7 +31,18 @@ CREATE TABLE rrd_archive_set (
 CREATE TABLE rrd_archive (
   id BIGINT(20) UNSIGNED AUTO_INCREMENT NOT NULL,
   rrd_archive_set_checksum VARBINARY(20) NOT NULL,
-  consolidation_function ENUM('AVERAGE', 'MIN', 'MAX', 'LAST'),
+  consolidation_function ENUM(
+    'AVERAGE',
+    'MIN',
+    'MAX',
+    'LAST',
+    'HWPREDICT',
+    'MHWPREDICT',
+    'SEASONAL',
+    'DEVSEASONAL',
+    'DEVPREDICT',
+    'FAILURES'
+  ),
   xfiles_factor FLOAT NOT NULL DEFAULT 0.5,
   row_count INT(10) UNSIGNED NOT NULL,
   step_size INT(10) UNSIGNED NOT NULL,
@@ -46,7 +57,7 @@ CREATE TABLE rrd_archive (
 CREATE TABLE rrd_file (
   id BIGINT(20) UNSIGNED AUTO_INCREMENT NOT NULL,
   -- rrdstore_id INT(10) UNSIGNED DEFAULT NULL,
-  filename VARCHAR(255) NOT NULL,
+  filename VARCHAR(255) CHARACTER SET utf8 COLLATE utf8_bin NOT NULL,
   rrd_step INT(10) UNSIGNED NOT NULL COMMENT 'Step size, e.g. 60, 300',
   rrd_version CHAR(4) CHARACTER SET ascii COLLATE ascii_bin NOT NULL,
   rrd_header_size INT(10) UNSIGNED NOT NULL,
@@ -85,8 +96,9 @@ CREATE TABLE rrd_datasource (
 
 CREATE TABLE pnp_xmlfile (
   id BIGINT(20) UNSIGNED AUTO_INCREMENT NOT NULL,
-  filename VARCHAR(255) NOT NULL,
-  PRIMARY KEY (id)
+  filename VARCHAR(255) CHARACTER SET utf8 COLLATE utf8_bin NOT NULL,
+  PRIMARY KEY (id),
+  UNIQUE INDEX filename (filename)
 ) ENGINE=InnoDb DEFAULT CHARSET=utf8;
 
 CREATE TABLE pnp_datasource_info (
