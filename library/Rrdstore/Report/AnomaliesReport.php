@@ -3,13 +3,10 @@
 namespace Icinga\Module\Rrdstore\Report;
 
 use Icinga\Module\Reporting\Web\Form\QuickForm;
-use Icinga\Module\Reporting\Report\IdoReport;
 use Icinga\Module\Rrdstore\Anomalies;
 
-class AnomaliesReport extends IdoReport
+class AnomaliesReport extends RrdstoreReport
 {
-    protected $db;
-
     protected $anomalies;
 
     public function __construct()
@@ -34,13 +31,14 @@ class AnomaliesReport extends IdoReport
 
     public function getViewScript()
     {
-        return 'reports/perfdata.phtml';
+        return 'reports/anomalies.phtml';
     }
 
     public function getViewData()
     {
         return array(
-            'graphs' => array()
+            'graphs' => array(),
+            'results
         );
         $db = $this->db()->getDbAdapter();
         $size = $this->getValue('size');
@@ -72,16 +70,4 @@ class AnomaliesReport extends IdoReport
 
         return array_combine($checks, $checks);
     }
-
-    protected function db()
-    {
-        if ($this->db === null) {
-            $this->db = Db::fromResourceName(
-                Config::module('rrdstore')->get('db', 'resource')
-            );
-        }
-
-        return $this->db;
-    }
-
 }
