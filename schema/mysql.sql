@@ -171,3 +171,11 @@ CREATE TABLE aggregated_monthly (
     ON UPDATE RESTRICT
 ) ENGINE=InnoDb;
 
+CREATE TABLE anomaly_checks (
+  id INT UNSIGNED NOT NULL,
+  check_name VARCHAR(255) NOT NULL,
+  last_run DATETIME DEFAULT NULL,
+  matches MEDIUMTEXT DEFAULT NULL,
+  PRIMARY KEY (id),
+  UNIQUE INDEX check_name (check_name)
+) ENGINE=InnoDb;
