@@ -4,7 +4,6 @@ namespace Icinga\Module\Rrdstore;
 
 use Icinga\Data\Db\DbConnection;
 use Icinga\Data\Filter\Filter;
-use Icinga\Module\Itenossla\Timeframe;
 
 class Rrdstore
 {
@@ -203,6 +202,7 @@ class Rrdstore
     public function checkData($host, $service, $filter, $start = null, $end = null)
     {
         $db = $this->db->getConnection();
+        $timeStart = microtime(true);
 
         $query = $db->select()->from(
             array('po' => 'pnp_object'),
@@ -236,6 +236,8 @@ class Rrdstore
 
         $filter = Filter::fromQueryString($filter);
         $datasources = $db->fetchAll($query);
+        $timeQuery = microtime(true) - $timeStart;
+        $timeStart = microtime(true);
 
         if ($start === null) {
             $start = time() - 3600 * 4;
@@ -251,6 +253,9 @@ class Rrdstore
 
         $end = time();
         $res = $this->summariesForDatasources($datasources, $start, $end, 'day');
+        $timeData  = microtime(true) - $timeStart;
+        $timeStart = microtime(true);
+
         $lookup = array();
         foreach ($datasources as $idx => $ds) {
             $lookup[$ds->datasource_id] = $idx;
@@ -258,7 +263,9 @@ class Rrdstore
 
         $result = (object) array(
             'stats' => (object) array(
-                'cnt_checked_datasources' => count($datasources)
+                'cnt_checked_datasources' => count($datasources),
+                'duration_ms_database'    => floor($timeQuery * 1000),
+                'duration_ms_rrd'         => floor($timeData * 1000),
             ),
             'matches' => array(
             )
@@ -269,7 +276,11 @@ class Rrdstore
             }
 
             $ds = $datasources[$lookup[$r['rrd_datasource_id']]];
-            $result->matches[] = (object) ((array) $ds + (array) $r);
+            $result->matches[] = (object) (
+                (array) $ds
+                + array('start' => $start, 'end' => $end),
+                + (array) $r
+            );
         }
 
         $result->stats->cnt_matches = count($result->matches);

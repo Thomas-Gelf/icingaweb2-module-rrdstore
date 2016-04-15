@@ -1,11 +1,10 @@
 <?php
 
-use Icinga\Web\Controller;
+use Icinga\Application\Config;
 use Icinga\Module\Monitoring\Backend;
 use Icinga\Module\Rrdstore\Db;
 use Icinga\Module\Rrdstore\Rrdstore;
-use Icinga\Module\Itenossla\Timeframes;
-use Icinga\Application\Config;
+use Icinga\Web\Controller;
 
 class Rrdstore_RenderController extends Controller
 {
