@@ -3,6 +3,7 @@
 namespace Icinga\Module\Rrdstore;
 
 use Icinga\Data\Db\DbConnection;
+use Icinga\Data\Filter\Filter;
 use Icinga\Module\Itenossla\Timeframe;
 
 class Rrdstore
@@ -199,10 +200,83 @@ class Rrdstore
         }
     }
 
+    public function checkData($host, $service, $filter, $start = null, $end = null)
+    {
+        $db = $this->db->getConnection();
+
+        $query = $db->select()->from(
+            array('po' => 'pnp_object'),
+            array(
+                'po.icinga_host',
+                'po.icinga_service',
+            )
+        )->join(
+            array('pds' => 'pnp_datasource_info'),
+            'po.id = pds.pnp_object_id',
+            array(
+                'datasource_id' => 'ds.id',
+                'filename'      => 'f.filename',
+                'datasource'    => 'ds.datasource_name'
+            )
+        )->join(
+            array('ds' => 'rrd_datasource'),
+            'ds.id = pds.rrd_datasource_id',
+            array()
+        )->join(
+            array('f' => 'rrd_file'),
+            'f.id = ds.rrd_file_id',
+            array()
+        );
+        if ($host) {
+            $query->where('po.icinga_host LIKE ?', str_replace('*', '%', $host));
+        }
+        if ($service) {
+            $query->where('po.icinga_service LIKE ?', str_replace('*', '%', $service));
+        }
+
+        $filter = Filter::fromQueryString($filter);
+        $datasources = $db->fetchAll($query);
+
+        printf("Checking %d datasources\n", count($datasources));
+        if ($start === null) {
+            $start = time() - 3600 * 4;
+        } else {
+            $start = strtotime($start);
+        }
+
+        if ($end === null) {
+            $end = time();
+        } else {
+            $end = strtotime($end);
+        }
+
+        $end = time();
+        $res = $this->summariesForDatasources($datasources, $start, $end, 'day');
+        $lookup = array();
+        foreach ($datasources as $idx => $ds) {
+            $lookup[$ds->datasource_id] = $idx;
+        }
+
+        foreach ($res as $k => $r) {
+            if (! $filter->matches((object) $r)) {
+                continue;
+            }
+
+            $ds = $datasources[$lookup[$r['rrd_datasource_id']]];
+            printf("%s: %s\n", $ds->icinga_host, $ds->icinga_service);
+            // print_r($r);
+        }
+    }
+
     public function graphCommand($id, $width = 400, $height = 100, $start = null, $end = null)
     {
         // From PNP?
         $graphOpt = ' --color BACK#FFF --color SHADEA#FFF --color SHADEB#FFF --disable-rrdtool-tag';
+//        $graphOpt .= ' --x-grid none --y-grid none -E';
+        $graphOpt .= ' -E'; // slope
+        // $graphOpt .= ' --alt-y-grid  --grid-dash 1:0';
+        $graphOpt .= ' --grid-dash 1:0';
+        $graphOpt .= ' --color ARROW#000 --color MGRID#0002 --color GRID#0001';
 
         $db = $this->db->getDbAdapter();
         $props = $db->fetchRow($db->select()->from('pnp_graph')->where('id = ?', $id));
@@ -293,6 +367,11 @@ class Rrdstore
         $cnt = 0;
 
         foreach ($datasources as $idx => $ds) {
+            if (! file_exists($this->basedir . '/' . $ds->filename)) {
+                // TODO: Should we fail here?
+                continue;
+            }
+
             foreach ($pattern as $name => $rpn) {
                 $prefix = $name . $idx;
                 $cmd .= sprintf(
@@ -328,6 +407,11 @@ class Rrdstore
 
                 foreach (preg_split('/\n/', $stdout, -1, PREG_SPLIT_NO_EMPTY) as $line) {
                     list($dsid, $what, $value) = preg_split('/ /', $line, 3);
+                    if (!is_numeric($dsid)) {
+                        // TODO: Should we fail here?
+                        echo $line . "\n";
+                        continue;
+                    }
                     $dskey = $datasources[$dsid]->filename . ': ' . $datasources[$dsid]->datasource;
                     if (! array_key_exists($dskey, $res)) {
                         $res[$dskey] = array(
