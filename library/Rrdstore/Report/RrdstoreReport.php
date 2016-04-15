@@ -34,6 +34,17 @@ abstract class RrdstoreReport extends IdoReport
         ),
     );
 
+    protected function addSizesElement(QuickForm $form)
+    {
+        $form->addElement('select', 'size', array(
+            'label'        => $form->translate('Size'),
+            'multiOptions' => $this->enumSizes(),
+            'value'        => 'compact-wide',
+            'class'        => 'autosubmit',
+            'required'     => true,
+        ));
+    }
+
     protected function enumSizes()
     {
         $enum = array();

@@ -27,6 +27,8 @@ class AnomaliesReport extends RrdstoreReport
             'class'        => 'autosubmit',
             'required'     => true
         ));
+
+        $this->addSizesElement($form);
     }
 
     public function getViewScript()
@@ -36,31 +38,21 @@ class AnomaliesReport extends RrdstoreReport
 
     public function getViewData()
     {
-        return array(
-            'graphs' => array(),
-            'results
-        );
         $db = $this->db()->getDbAdapter();
+        $results = $db->fetchOne(
+            $db->select()->from('anomaly_checks', 'matches')
+               ->where('check_name = ?', $this->getValue('anomaly_check'))
+        );
+
+        $anomaly = $this->anomalies->get($this->getValue('anomaly_check'));
+
         $size = $this->getValue('size');
 
-        $filters = array(
-            'host'           => $this->getValue('host'),
-            'hostgroup'      => $this->getValue('hostgroup'),
-            'search_service' => $this->getValue('service'),
-            // 'sub_service' => $this->getValue('sub_service'),
-            'graph_name'     => $this->getValue('graph_name'),
-        );
-
         return array(
-            'graphs' => $db->fetchAll(
-                $this->db()->prepareGraphQuery($filters)->limit(
-                    $this->getValue('limit')
-                )
-            ),
+            'graphs'  => array(),
+            'results' => json_decode($results),
             'width'  => $this->sizes[$size]['width'],
             'height' => $this->sizes[$size]['height'],
-            'start'  => $timeframe->getStart(),
-            'end'    => $timeframe->getEnd(),
         );
     }
 

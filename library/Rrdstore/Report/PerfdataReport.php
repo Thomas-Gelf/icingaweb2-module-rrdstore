@@ -38,13 +38,7 @@ class PerfdataReport extends RrdstoreReport
             'required'     => true
         ));
 
-        $form->addElement('select', 'size', array(
-            'label'        => $form->translate('Size'),
-            'multiOptions' => $this->enumSizes(),
-            'value'        => 'compact-wide',
-            'class'        => 'autosubmit',
-            'required'     => true,
-        ));
+        $this->addSizesElement($form);
 
         if (! $form->hasBeenSent() || ! $form->isValidPartial($form->getRequest()->getPost())) {
             return;

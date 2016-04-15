@@ -20,6 +20,11 @@ class Anomalies
         return $this->config->keys();
     }
 
+    public function get($key)
+    {
+        return $this->config->getSection($key);
+    }
+
     public function runChecks(Rrdstore $rrdstore, Db $db)
     {
         $dbc = $db->getConnection();
