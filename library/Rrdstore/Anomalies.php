@@ -10,7 +10,7 @@ class Anomalies
 
     public function __construct()
     {
-        $this->config = Config::module('reporting', 'anomalies');
+        $this->config = Config::module('rrdstore', 'anomalies');
     }
 
     public function listConfiguredChecks()

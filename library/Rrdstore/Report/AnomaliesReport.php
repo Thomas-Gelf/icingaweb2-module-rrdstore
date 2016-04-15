@@ -6,9 +6,16 @@ use Icinga\Module\Reporting\Web\Form\QuickForm;
 use Icinga\Module\Reporting\Report\IdoReport;
 use Icinga\Module\Rrdstore\Anomalies;
 
-class PerfdataReport extends IdoReport
+class AnomaliesReport extends IdoReport
 {
     protected $db;
+
+    protected $anomalies;
+
+    public function __construct()
+    {
+        $this->anomalies = new Anomalies();
+    }
 
     public function getName()
     {
@@ -19,7 +26,7 @@ class PerfdataReport extends IdoReport
     {
         $form->addElement('select', 'anomaly_check', array(
             'label'        => $form->translate('Anomaly check'),
-            'multiOptions' => $form->optionalEnum($this->ido()->enumAnomalies()),
+            'multiOptions' => $form->optionalEnum($this->enumAnomalies()),
             'class'        => 'autosubmit',
             'required'     => true
         ));
@@ -27,12 +34,14 @@ class PerfdataReport extends IdoReport
 
     public function getViewScript()
     {
-        return 'reports/anomalies.phtml';
+        return 'reports/perfdata.phtml';
     }
 
     public function getViewData()
     {
-        return array();
+        return array(
+            'graphs' => array()
+        );
         $db = $this->db()->getDbAdapter();
         $size = $this->getValue('size');
 
@@ -44,7 +53,6 @@ class PerfdataReport extends IdoReport
             'graph_name'     => $this->getValue('graph_name'),
         );
 
-        $timeframe = $this->getSelectedTimeframe();
         return array(
             'graphs' => $db->fetchAll(
                 $this->db()->prepareGraphQuery($filters)->limit(
@@ -56,6 +64,13 @@ class PerfdataReport extends IdoReport
             'start'  => $timeframe->getStart(),
             'end'    => $timeframe->getEnd(),
         );
+    }
+
+    protected function enumAnomalies()
+    {
+        $checks = $this->anomalies->listConfiguredChecks();
+
+        return array_combine($checks, $checks);
     }
 
     protected function db()
