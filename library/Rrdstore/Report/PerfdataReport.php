@@ -69,6 +69,7 @@ class PerfdataReport extends IdoReport
         $form->addElement('select', 'size', array(
             'label'        => $form->translate('Size'),
             'multiOptions' => $this->enumSizes(),
+            'value'        => 'compact-wide',
             'class'        => 'autosubmit',
             'required'     => true,
         ));
